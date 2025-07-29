@@ -1,0 +1,18 @@
+django
+django-solo
+django-tinymce
+django-cleanup
+django-debug-toolbar
+django-ordered-model
+django-admin-rangefilter
+django-phonenumber-field
+
+# Excel
+pandas
+openpyxl
+phonenumbers # + for PhonenumberField
+
+#Other
+pillow # For ImageField
+dotenv
+requests

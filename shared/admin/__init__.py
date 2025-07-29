@@ -1,0 +1,2 @@
+from .model_registrator import AdminModelRegistrator
+from .singleton_utils 	import make_singleton_model_admin_class

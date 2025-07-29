@@ -1,0 +1,59 @@
+{% extends 'content/base.html' %}
+
+{% block content %}
+<div>
+	{{ data.page.ceo_content|safe }}
+</div>
+
+<code id="timer" class="timer">10:00</code>
+
+<style>
+	main {
+		margin-top: 3rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 3rem;
+		height: 85vh;
+
+	}
+	p {
+		margin: 0;
+	}
+	h1 {
+		margin: 0;
+	}
+	
+	.timer {
+		font-size: 4rem;
+		font-weight: bolder;
+	}
+</style>
+<script>
+	// Устанавливаем время в секундах (10 минут = 600 секунд)
+	let timeLeft = 600;
+	const timerElement = document.getElementById('timer');
+
+	function formatTime(seconds) {
+		const mins = Math.floor(seconds / 60);
+		const secs = seconds % 60;
+		return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+	}
+
+	function updateTimer() {
+		timerElement.textContent = formatTime(timeLeft);
+		
+		if (timeLeft > 0) {
+			timeLeft--;
+			setTimeout(updateTimer, 1000);
+		} else {
+			timerElement.textContent = "00:00";
+			// Дополнительные действия по завершении таймера
+			// alert("Время вышло!");
+		}
+	}
+
+	// Запускаем таймер
+	updateTimer();
+</script>
+{% endblock %}

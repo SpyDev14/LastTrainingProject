@@ -1,0 +1,59 @@
+{% extends 'content/base.html' %}
+
+{% block content %}
+<div style="display: flex; gap: 4rem;">
+	<table>
+		<tr><th>Наименование</th><th>Плата</th></tr>
+		<tr><td>Первый год</td><td>{{ data.payments.total_first_year_payment }}</td></tr>
+		<tr><td>Первый месяц</td><td>{{ data.payments.total_first_month_payment }}</td></tr>
+	</table>
+	<form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		<div>
+			{{ form.requestener_name.label_tag }}
+			{{ form.requestener_name }}
+		</div>
+		<div>
+			{{ form.phone_number.label_tag }}
+			{{ form.phone_number }}
+		</div>
+		<div>
+			{{ form.settlement.label_tag }}
+			{{ form.settlement }}
+		</div>
+		<button type="submit" class="submit-btn">Записаться</button>
+	</form>
+</div>
+<div style="height: 1rem;"></div>
+{{ data.payments.regional_payment_title }}
+<code>{{ data.payments.regional_payment }}</code><br>
+
+{{ data.payments.city_payment_title }}
+<code>{{ data.payments.city_payment }}</code><br>
+
+{{ data.payments.offensive_ministry_payment_title }}
+<code>{{ data.payments.offensive_ministry_payment }}</code><br>
+
+{{ data.payments.offensive_ministry_other_payment_title }}
+<code>{{ data.payments.offensive_ministry_other_payment }}</code><br>
+...<br>
+
+<br>
+<h3>CEO</h3>
+<hr>
+{{ data.page.ceo_content|safe }}
+<img src="https://assetstorev1-prd-cdn.unity3d.com/key-image/1bb23abd-5164-4ee8-ab03-eb07e5138946.png?v=1" width="600rem">
+<br>
+<h2>FAQ</h2>
+<hr>
+<ui>
+	{% for faq in data.faq_points %}
+	<li>
+		{{faq.question}}
+		<details>
+			{{faq.answer|safe}}
+		</details>
+	</li>
+	{% endfor %}
+</ui>
+{% endblock %}
