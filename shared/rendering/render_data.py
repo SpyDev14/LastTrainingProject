@@ -15,11 +15,11 @@ class UserProfile(Model):
 ```
 class ...Config(AppConfig):
 	def ready(self):
-		_init_page_render_data_class()
+		from shared.rendering import render_data
+		render_data._init_page_render_data_class()
 ```
 """
-# NOTE: Сейчас пересматриваю и какой-то запашок идёт от кода, как будто бы
-# в коммерции пофиг было бы, конечно, но сейчас же я вроде как свои навыки демонстрирую.
+
 from typing import Callable
 import logging
 
@@ -33,6 +33,7 @@ from shared.string_processing.cases 	import camel_to_snake_case
 
 
 # TODO: Вместо переменных и функций на уровне модуля лучше использовать специальный класс PageRenderDataController
+# UPD: Я думаю, что класс всё же будет излишним, но я оставлю эту идею здесь на всякий случай
 _logger = logging.getLogger(__name__)
 
 # Экземпляры этих моделей будут требоваться в конструкторе при создании
@@ -88,9 +89,46 @@ class PageRenderData:
 	Экземпляры стандартных моделей помеченых как требуемые будут требоваться
 	в конструкторе при создании и будут доступны через атрибут вида `camel_to_snake_case(CLASS)`.
 
+	Пример использования:
+	```
+	# models.py
+	import render_data
+
+	@render_data.register_model_for_requirement_in_page_render_data_constructor
+	class Page(Model): ...
+
+	@render_data.register_model_for_page_render_data
+	class FAQPoint(Model): ...
+
+	@render_data.register_model_for_page_render_data
+	class SiteSettings(SingletonModel): ...
+	```
+	```
+	# views.py
+	from ... import ...
+
+	class MainView(View):
+		def get(self, request):
+			...
+			data = PageRenderData(page = page_instance)
+			context = {'data': data}
+
+			print(object.__str__(data.page))
+			# <Page object at ...>
+
+			print(object.__str__(data.site_settings))
+			# <SiteSettings object at ...>
+
+			print(object.__str__(data.faq_points))
+			# <QuerySet object at ...>
+
+			return render(request, ..., context)
+	```
+
 	:raise TypeError: Необходимые аргументы отстутствуют, присутствуют лишние аргументы,
 		либо тип переданного объекта не соответствует запрашиваемому.
-	:raise RuntimeError: не инициализированно, инициализируйте в `ready()` через `_init_page_render_data_class()`.
+	:raise RuntimeError: не инициализированно, инициализируйте в `AppConfig.ready()`
+		через `_init_page_render_data_class()`.
 	"""
 	def __init__(self, **kwargs: dict[str, Model]):
 		if not _inited:
@@ -152,8 +190,9 @@ def _init_page_render_data_class():
 					setattr(PageRenderData, f"{camel_to_snake_case(model.__name__)}s", model.objects.all())
 					_logger.debug(f'PageRenderData model {type(instance).__name__} updated.')
 				update_handler = _update_handler
-
+				# Также независимо от этого места название ('s'/'') расчитывается в логах
 			receiver(post_save, sender = model)(update_handler)
+	
 
 
 	global _required_kwarg_names
@@ -161,9 +200,24 @@ def _init_page_render_data_class():
 	# Это для оптимизации, чтобы не высчитывать каждый раз в __init__, так как эти значения не меняются.
 	_required_kwarg_names = set(_required_models_for_render_data_constructor) # keys
 
-	_logger.debug(
-		"\033[32mPageRenderData\033[0m model attribute names: " +
-		', '.join(attr for attr in PageRenderData.__dict__.keys() if not attr.startswith('_'))
-	)
-	_logger.debug(f"\033[32mPageRenderData\033[0m required kwargs in constructor: {', '.join(_required_kwarg_names)}")
 	_inited = True
+	_logger.debug(
+		"\033[32mPageRenderData\033[0m initialization successful completed.\n"
+		f"\033[36mModels\033[0m: \n > {
+			'\n > '.join(
+				f"{model.__name__} as {
+					camel_to_snake_case(model.__name__) +
+					('s' if not issubclass(model, SingletonModel) else '')
+				}"
+				for model in _models_for_render_data
+			)
+		}"
+		"\n\n"
+		f"\033[34mModels for requirement in constructor kwargs\033[0m: \n > {
+			'\n > '.join(
+				f"{model.__name__} as {arg_name}"
+				for arg_name, model in _required_models_for_render_data_constructor.items()
+			)
+		}"
+		"\n"
+	)

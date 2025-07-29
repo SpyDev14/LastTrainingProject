@@ -9,5 +9,5 @@ class ContentConfig(AppConfig):
 	verbose_name = 'Контент сайта'
 
 	def ready(self):
-		from shared.rendering.render_data import _init_page_render_data_class
-		_init_page_render_data_class()
+		from shared.rendering import render_data
+		render_data._init_page_render_data_class()
