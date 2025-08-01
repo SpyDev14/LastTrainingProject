@@ -10,7 +10,6 @@
 	{{ data.site_settings.html_head_addition }}
 </head>
 <body>
-	<!-- <th style="text-align: left; padding-right: 0.25rem;">Страницы</th> -->
 	<div style="display: flex; justify-content: space-between;">
 		<div>
 			Filename is <code>{{ data.page.file_name }}.html</code>
@@ -20,6 +19,8 @@
 			[<a href="{% url 'main' %}">Главная</a>]
 			[<a href="{% url 'success' %}">Успех</a>]
 			[<a href="{% url 'legal' %}">Legal</a>]
+			|
+			[<a href="admin/">Админка</a>]
 		</div>
 	</div>
 

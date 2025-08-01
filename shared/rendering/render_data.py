@@ -49,6 +49,20 @@ def register_model_for_requirement_in_page_render_data_constructor(cls: type[Mod
 	"""
 	Добавляет класс модели в список требуемых для создания объекта данных для рендеринга
 	html-страниц, где переданный экземпляр будет доступен по названию своей модели.
+
+	Пример создания объекта `PageRenderData` после регистрации модели через этот метод:
+	```
+	data = PageRenderData(
+		my_model = my_model_instance
+	)
+	print(data.my_model)
+	# <$MY_MODEL object at 0x...> # Экземпляр модели
+	data.my_model is my_model_instance # True
+
+	### Без передачи в конструктор
+	data = RageRenderData()
+	# TypeError: Missing required models: my_model
+	```
 	"""
 	if camel_to_snake_case(cls.__name__) in _required_models_for_render_data_constructor:
 		raise ValueError(f"{cls.__name__} already registered.")
@@ -64,9 +78,27 @@ def register_model_for_page_render_data(cls: type[SingletonModel]):
 	"""
 	Добавляет класс модели в список на основе которого при запуске серврера будет создан
 	и помещён в атрибуты класса, используемого для рендеринга html-страниц, синглтон-экземпляр,
-	если это сингтон-модель, или итератор экземпляров (objects.all()), если это обычная модель,
-	который будет находится в атрибуте вида `camel_to_snake_case(CLASS)s`, то есть
+	если это сингтон-модель, или итератор экземпляров (`objects.all()`), если это обычная модель,
+	который будет находится в атрибуте вида `camel_to_snake_case($CLASS)s`, то есть
 	`FAQPoint -> faq_points`.
+
+	Пример использования:
+	- **models.py**
+	```
+	@register_model_for_page_render_data
+	class Post(Model):
+		...
+
+	@register_model_for_page_render_data
+	class CompanyContacts(SingletonModel):
+		...
+	```
+	- **views.py**
+	```
+	data = PageRenderData()
+	print(data.posts) # <QuerySet object at 0x...> # Тип: QuerySet[Post]
+	print(data.company_contacts) # <CompanyContacts object at 0x...>
+	```
 	"""
 	if not issubclass(cls, Model): raise TypeError(f"{cls.__name__} must be a subclass of Model")
 	_models_for_render_data.add(cls)
@@ -77,21 +109,29 @@ def register_model_for_page_render_data(cls: type[SingletonModel]):
 # в __getattr__ при первом обращении, а после возвращать значение из этого атрибута.
 class PageRenderData:
 	"""
-	Общий объект данных для передачи в контекст при редеринге Html-страниц.<br>
-
-	Единственные экземпляры помеченных синглтон-моделей будут динамически
+	Общий объект данных для передачи в контекст при редеринге HTML-страниц.<br>
+	---------------------------------------------------------------------------
+	**Единственные экземпляры** помеченных **синглтон-моделей** (`SingletonModel`) будут динамически
 	помещены в атрибуты этого класса при старте сервера.<br>
 
-	Итераторы (`objects.all()`) зарегистрированных обычных моделей будут динамически помещены
-	в атрибуты этого класса с названием вида `camel_to_snake_case(CLASS)s`, то есть
-	`FAQPoint -> faq_points`
+	**Итераторы** (`objects.all()`) зарегистрированных **обычных моделей**(`Model`) будут динамически
+	помещены в атрибуты этого класса с названием вида `camel_to_snake_case($CLASS)s`, то есть
+	`FAQPoint -> faq_points`, `Post -> posts`.
 
-	Экземпляры стандартных моделей помеченых как требуемые будут требоваться
-	в конструкторе при создании и будут доступны через атрибут вида `camel_to_snake_case(CLASS)`.
+	<small>Подробнее смотрите в документации `register_model_for_page_render_data()`</small>
+	<hr>
+	
+	Экземпляры **стандартных моделей**(`Model`) помеченых как требуемые в конструкторе
+	будут требоваться в конструкторе при создании и будут доступны через атрибут вида
+	`camel_to_snake_case($CLASS)`.
+
+	<small>Подробнее смотрите в документации
+	`register_model_for_requirement_in_page_render_data_constructor()`</small>
+	<hr>
 
 	Пример использования:
+	- **models.py**
 	```
-	# models.py
 	import render_data
 
 	@render_data.register_model_for_requirement_in_page_render_data_constructor
@@ -103,10 +143,8 @@ class PageRenderData:
 	@render_data.register_model_for_page_render_data
 	class SiteSettings(SingletonModel): ...
 	```
+	- **views.py**
 	```
-	# views.py
-	from ... import ...
-
 	class MainView(View):
 		def get(self, request):
 			...
@@ -120,15 +158,18 @@ class PageRenderData:
 			# <SiteSettings object at ...>
 
 			print(object.__str__(data.faq_points))
-			# <QuerySet object at ...>
+			# <QuerySet object at ...> # Тип: QuerySet[FAQPoint]
 
 			return render(request, ..., context)
 	```
-
-	:raise TypeError: Необходимые аргументы отстутствуют, присутствуют лишние аргументы,
-		либо тип переданного объекта не соответствует запрашиваемому.
-	:raise RuntimeError: не инициализированно, инициализируйте в `AppConfig.ready()`
-		через `_init_page_render_data_class()`.
+	
+	Raises:
+		TypeError:
+			- Необходимые аргументы отстутствуют
+			- Присутствуют лишние аргументы
+			- Тип переданного объекта не соответствует запрашиваемому.
+		RuntimeError: не инициализированно, инициализируйте в любом из `AppConfig.ready()`
+			через `_init_page_render_data_class()`.
 	"""
 	def __init__(self, **kwargs: dict[str, Model]):
 		if not _inited:
@@ -144,14 +185,13 @@ class PageRenderData:
 
 		for arg_name, value in kwargs.items():
 			# Проверка типа
-			if arg_name in _required_models_for_render_data_constructor:
-				required_model_cls = _required_models_for_render_data_constructor[arg_name]
+			required_model_cls = _required_models_for_render_data_constructor[arg_name]
 
-				if not isinstance(value, required_model_cls):
-					raise TypeError(
-						f"Model type `{required_model_cls.__name__}` was expected, "
-						f"but `{type(value).__qualname__}` was received."
-					)
+			if not isinstance(value, required_model_cls):
+				raise TypeError(
+					f"Model type `{required_model_cls.__name__}` was expected, "
+					f"but `{type(value).__qualname__}` was received."
+				)
 			setattr(self, arg_name, value)
 
 

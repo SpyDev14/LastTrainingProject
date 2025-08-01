@@ -88,6 +88,7 @@ class RecruitersBranche(models.Model):
 	number_phone = models.CharField(verbose_name = "Телефон")
 	coordinates = models.CharField(verbose_name = "Координаты", blank = True)
 
+	# Исключительно техническое поле для работы Inline формы в админке RecruitersContacts
 	_link_to_contacts_for_admin_model_inline_drawning = models.ForeignKey(RecruitersContacts, on_delete = models.CASCADE)
 
 	class Meta:

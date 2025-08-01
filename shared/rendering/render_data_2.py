@@ -32,6 +32,7 @@ from shared.string_processing.cases 	import camel_to_snake_case
 
 
 
+
 class PageRenderData:
 	"""
 	Общий объект данных для передачи в контекст при редеринге Html-страниц.<br>
@@ -86,7 +87,7 @@ class PRDController:
 	def _make_standart_model_iterator_attr_name(model_class: type[Model]):
 		return f"{camel_to_snake_case(model_class.__name__)}s"
 
-
+	# Обработчики
 	@staticmethod
 	def _singleton_model_update_handler():
 		pass

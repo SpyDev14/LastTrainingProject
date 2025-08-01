@@ -6,6 +6,7 @@ from django.urls 			import reverse
 def make_singleton_model_admin_class(model: SingletonModel):
 	meta = model._meta
 
+	# Ревлизованно через прямое создание type только ради кастомного названия
 	admin_class = type(
 		f"{model.__name__}Admin",
 		(ModelAdmin, ),
