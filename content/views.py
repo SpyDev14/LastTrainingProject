@@ -33,9 +33,8 @@ class BasePageView(View):
 			raise ValueError('Название необходимо указывать без расширения .html')
 
 
-	# @classmethod с @property помечен как deprecated API, нельзя совместить.
-	# @property (или cached_property как у нас) тут необходимо для того, чтобы
-	# поле нельзя было изменить.
+	# @cached_property тут необходимо для того, чтобы поле было
+	# нельзя изменить и оно не вычислялось каждый раз (бонусом).
 	@cached_property
 	def _template_name(self) -> str:
 		# Django сам разрешит путь для всех ОС
