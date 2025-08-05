@@ -10,4 +10,4 @@ class ContentConfig(AppConfig):
 
 	def ready(self):
 		from shared.rendering import render_data
-		render_data._init_page_render_data_class()
+		render_data.init_page_render_data_class()
